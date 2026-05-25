@@ -343,7 +343,20 @@
     display: flex;
     gap: 0.5rem;
     justify-content: center;
+    flex-wrap: wrap;
   }
+  .share-modal input {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .share-modal input:focus { outline: none; border-color: var(--accent); }
 
   @media (max-width: 500px) {
     .player-score { font-size: 1.2rem; }
@@ -368,6 +381,7 @@
 
     <div class="controls" id="controls" style="display:none">
       <button id="nextRoundBtn" class="primary">Nächste Runde</button>
+      <button id="shareBtn">Teilen</button>
       <button id="resetBtn" class="danger">Spiel zurücksetzen</button>
     </div>
 
@@ -402,6 +416,19 @@
       <div class="modal-actions">
         <button id="modalCancel" class="ghost">Abbrechen</button>
         <button id="modalConfirm" class="danger">Zurücksetzen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="shareBackdrop">
+    <div class="modal share-modal">
+      <h2>Spielstand teilen</h2>
+      <p>Wer diesen Link öffnet, sieht den aktuellen Spielstand. Es ist eine Momentaufnahme — spätere Änderungen werden nicht automatisch synchronisiert.</p>
+      <input id="shareUrl" type="text" readonly />
+      <div class="modal-actions">
+        <button id="shareCopyBtn" class="primary">Link kopieren</button>
+        <button id="shareSystemBtn" style="display:none">Teilen…</button>
+        <button id="shareCloseBtn" class="ghost">Schließen</button>
       </div>
     </div>
   </div>
@@ -731,6 +758,120 @@
     showConfirm("Spiel zurücksetzen?", "Alle Spieler und Punkte werden gelöscht.", resetGame);
   });
 
+  function encodeState(s) {
+    const json = JSON.stringify(s);
+    const utf8 = unescape(encodeURIComponent(json));
+    return btoa(utf8).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function decodeState(encoded) {
+    try {
+      const b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = b64 + "=".repeat((4 - b64.length % 4) % 4);
+      const json = decodeURIComponent(escape(atob(padded)));
+      const parsed = JSON.parse(json);
+      if (!parsed || !Array.isArray(parsed.players)) return null;
+      for (const p of parsed.players) {
+        if (typeof p.name !== "string" || typeof p.score !== "number" || typeof p.phase !== "number") return null;
+        if (!Array.isArray(p.history)) p.history = [];
+        if (!p.id) p.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      }
+      if (typeof parsed.round !== "number" || parsed.round < 1) parsed.round = 1;
+      return parsed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function buildShareUrl() {
+    return location.origin + location.pathname + "#g=" + encodeState(state);
+  }
+
+  function openShareModal() {
+    if (state.players.length === 0) {
+      toast("Keine Spieler zum Teilen");
+      return;
+    }
+    const url = buildShareUrl();
+    const input = document.getElementById("shareUrl");
+    input.value = url;
+    document.getElementById("shareSystemBtn").style.display = navigator.share ? "" : "none";
+    document.getElementById("shareBackdrop").classList.add("show");
+    setTimeout(() => { input.select(); }, 50);
+  }
+
+  function closeShareModal() {
+    document.getElementById("shareBackdrop").classList.remove("show");
+  }
+
+  async function copyShareLink() {
+    const url = document.getElementById("shareUrl").value;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Link kopiert!");
+    } catch (_) {
+      const input = document.getElementById("shareUrl");
+      input.select();
+      try {
+        document.execCommand("copy");
+        toast("Link kopiert!");
+      } catch (__) {
+        toast("Bitte Link manuell kopieren");
+      }
+    }
+  }
+
+  async function systemShare() {
+    const url = document.getElementById("shareUrl").value;
+    try {
+      await navigator.share({ title: "Phase 10 Spielstand", url });
+    } catch (e) {
+      if (e && e.name !== "AbortError") toast("Teilen fehlgeschlagen");
+    }
+  }
+
+  document.getElementById("shareBtn").addEventListener("click", openShareModal);
+  document.getElementById("shareCopyBtn").addEventListener("click", copyShareLink);
+  document.getElementById("shareSystemBtn").addEventListener("click", systemShare);
+  document.getElementById("shareCloseBtn").addEventListener("click", closeShareModal);
+  document.getElementById("shareBackdrop").addEventListener("click", e => {
+    if (e.target.id === "shareBackdrop") closeShareModal();
+  });
+
+  function clearHash() {
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  function loadFromHash() {
+    const hash = location.hash;
+    if (!hash.startsWith("#g=")) return;
+    const incoming = decodeState(hash.slice(3));
+    if (!incoming) {
+      toast("Geteilter Link ungültig");
+      clearHash();
+      return;
+    }
+    const hasLocal = state.players && state.players.length > 0;
+    const apply = () => {
+      state = incoming;
+      saveState();
+      clearHash();
+      render();
+      toast("Spielstand geladen");
+    };
+    if (hasLocal) {
+      showConfirm(
+        "Spielstand laden?",
+        `Geteilter Stand: ${incoming.players.length} Spieler, Runde ${incoming.round}. Dein aktueller Stand wird ersetzt.`,
+        apply
+      );
+    } else {
+      apply();
+    }
+  }
+
+  window.addEventListener("hashchange", loadFromHash);
+  loadFromHash();
   render();
 })();
 </script>
