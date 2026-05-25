@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="theme-color" content="#1f2937" />
+<title>Phase 10 Tracker</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --border: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #0ea5e9;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --gold: #fbbf24;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  header {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+  }
+  header .round-info {
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+    padding-bottom: 6rem;
+  }
+
+  .setup, .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .setup input {
+    flex: 1;
+    min-width: 160px;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .setup input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  button {
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button:hover { background: #334155; }
+  button:active { transform: scale(0.98); }
+  button.primary {
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+    color: white;
+    font-weight: 600;
+  }
+  button.primary:hover { background: var(--accent); }
+  button.danger {
+    background: transparent;
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  button.danger:hover { background: rgba(239, 68, 68, 0.15); }
+  button.ghost {
+    background: transparent;
+  }
+
+  .players {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .player-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .player-card.winner {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 20px rgba(251, 191, 36, 0.25);
+  }
+  .player-card.leading {
+    border-color: var(--accent);
+  }
+
+  .player-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+  .player-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    padding: 0.25rem 0.4rem;
+    border-radius: 6px;
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+  }
+  .player-name:hover, .player-name:focus {
+    background: var(--panel-2);
+    outline: none;
+  }
+  .player-score {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .player-score.low { color: var(--success); }
+  .player-score.high { color: var(--warning); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.4rem;
+  }
+  .badge.gold { background: var(--gold); color: #1f2937; }
+
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+    margin: 0.5rem 0 0.75rem;
+  }
+  .phase-pill {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-2);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .phase-pill:hover { border-color: var(--accent); }
+  .phase-pill.done {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+  .phase-pill.current {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .phase-info {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    min-height: 1.1em;
+  }
+  .phase-info strong {
+    color: var(--text);
+  }
+
+  .player-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .player-actions input {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .player-actions input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .player-actions button {
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .history {
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .history-rounds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+  }
+  .history-rounds span {
+    background: var(--panel-2);
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .history-rounds span.advanced {
+    border-left: 2px solid var(--success);
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+  }
+
+  .controls {
+    margin-top: 1.5rem;
+    justify-content: center;
+  }
+
+  .phase-reference {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .phase-reference summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .phase-reference ol {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .phase-reference li {
+    padding: 0.2rem 0;
+  }
+  .phase-reference .scoring {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal h2 { margin: 0 0 0.5rem; }
+  .modal p { color: var(--muted); margin: 0 0 1rem; }
+  .modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  @media (max-width: 500px) {
+    .player-score { font-size: 1.2rem; }
+    .phases { gap: 3px; }
+    .phase-pill { font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Phase 10 Tracker</h1>
+    <div class="round-info" id="roundInfo">Round 1</div>
+  </header>
+
+  <main>
+    <div class="setup">
+      <input id="newPlayerName" type="text" placeholder="Add player name..." maxlength="20" />
+      <button class="primary" id="addPlayerBtn">Add Player</button>
+    </div>
+
+    <div class="players" id="players"></div>
+
+    <div class="controls" id="controls" style="display:none">
+      <button id="nextRoundBtn" class="primary">Next Round</button>
+      <button id="resetBtn" class="danger">Reset Game</button>
+    </div>
+
+    <details class="phase-reference">
+      <summary>Phases &amp; Scoring</summary>
+      <ol>
+        <li>2 sets of 3</li>
+        <li>1 set of 3 + 1 run of 4</li>
+        <li>1 set of 4 + 1 run of 4</li>
+        <li>1 run of 7</li>
+        <li>1 run of 8</li>
+        <li>1 run of 9</li>
+        <li>2 sets of 4</li>
+        <li>7 cards of one color</li>
+        <li>1 set of 5 + 1 set of 2</li>
+        <li>1 set of 5 + 1 set of 3</li>
+      </ol>
+      <div class="scoring">
+        <strong>Scoring (cards left in hand):</strong><br />
+        1–9: 5 pts &middot; 10–12: 10 pts &middot; Skip: 15 pts &middot; Wild: 25 pts<br />
+        <em style="color: var(--muted)">Lowest score wins. First to complete Phase 10 ends the game.</em>
+      </div>
+    </details>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h2 id="modalTitle">Reset game?</h2>
+      <p id="modalMessage">This will clear all players and scores.</p>
+      <div class="modal-actions">
+        <button id="modalCancel" class="ghost">Cancel</button>
+        <button id="modalConfirm" class="danger">Reset</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "phase10-tracker-v1";
+  const PHASE_DESCRIPTIONS = [
+    "2 sets of 3",
+    "1 set of 3 + 1 run of 4",
+    "1 set of 4 + 1 run of 4",
+    "1 run of 7",
+    "1 run of 8",
+    "1 run of 9",
+    "2 sets of 4",
+    "7 cards of one color",
+    "1 set of 5 + 1 set of 2",
+    "1 set of 5 + 1 set of 3",
+  ];
+
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return { players: [], round: 1 };
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (_) {}
+  }
+
+  function makePlayer(name) {
+    return {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      phase: 1,
+      score: 0,
+      history: [],
+    };
+  }
+
+  function addPlayer(name) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    state.players.push(makePlayer(trimmed));
+    saveState();
+    render();
+  }
+
+  function removePlayer(id) {
+    state.players = state.players.filter(p => p.id !== id);
+    saveState();
+    render();
+  }
+
+  function updatePlayerName(id, name) {
+    const p = state.players.find(p => p.id === id);
+    if (!p) return;
+    p.name = name.trim() || p.name;
+    saveState();
+  }
+
+  function togglePhase(playerId, phaseIndex) {
+    const p = state.players.find(p => p.id === playerId);
+    if (!p) return;
+    const phaseNum = phaseIndex + 1;
+    if (phaseNum < p.phase) {
+      p.phase = phaseNum;
+    } else if (phaseNum === p.phase) {
+      p.phase = Math.min(11, p.phase + 1);
+    } else {
+      p.phase = phaseNum;
+    }
+    saveState();
+    render();
+  }
+
+  function getWinner() {
+    const finished = state.players.filter(p => p.phase > 10);
+    if (finished.length === 0) return null;
+    return finished.slice().sort((a, b) => a.score - b.score)[0];
+  }
+
+  function getLeaderId() {
+    if (state.players.length < 2) return null;
+    const active = state.players.filter(p => p.phase <= 10 || p.phase > 10);
+    if (!active.length) return null;
+    const sorted = active.slice().sort((a, b) => {
+      if (b.phase !== a.phase) return b.phase - a.phase;
+      return a.score - b.score;
+    });
+    return sorted[0].id;
+  }
+
+  function render() {
+    const playersEl = document.getElementById("players");
+    const controlsEl = document.getElementById("controls");
+    const roundInfoEl = document.getElementById("roundInfo");
+
+    roundInfoEl.textContent = `Round ${state.round}`;
+
+    if (state.players.length === 0) {
+      playersEl.innerHTML = `<div class="empty">Add players above to start tracking your game.</div>`;
+      controlsEl.style.display = "none";
+      return;
+    }
+
+    controlsEl.style.display = "flex";
+
+    const winner = getWinner();
+    const leaderId = winner ? winner.id : getLeaderId();
+
+    playersEl.innerHTML = "";
+    for (const p of state.players) {
+      const card = document.createElement("div");
+      card.className = "player-card";
+      if (winner && winner.id === p.id) card.classList.add("winner");
+      else if (leaderId === p.id) card.classList.add("leading");
+
+      const finished = p.phase > 10;
+      const currentPhaseIdx = finished ? -1 : p.phase - 1;
+      const phaseDesc = finished
+        ? "All 10 phases complete!"
+        : `Phase ${p.phase}: <strong>${PHASE_DESCRIPTIONS[currentPhaseIdx]}</strong>`;
+
+      const scoreClass = p.score < 50 ? "low" : p.score > 150 ? "high" : "";
+
+      card.innerHTML = `
+        <div class="player-head">
+          <input class="player-name" value="${escapeHtml(p.name)}" data-id="${p.id}" maxlength="20" />
+          <div class="player-score ${scoreClass}">
+            ${p.score}
+            ${winner && winner.id === p.id ? '<span class="badge gold">WINNER</span>' : ''}
+          </div>
+        </div>
+        <div class="phase-info">${phaseDesc}</div>
+        <div class="phases" data-id="${p.id}">
+          ${PHASE_DESCRIPTIONS.map((desc, i) => {
+            const phaseNum = i + 1;
+            const done = phaseNum < p.phase;
+            const current = phaseNum === p.phase && !finished;
+            const cls = done ? "done" : current ? "current" : "";
+            return `<div class="phase-pill ${cls}" data-phase="${i}" title="Phase ${phaseNum}: ${desc}">${phaseNum}</div>`;
+          }).join("")}
+        </div>
+        <div class="player-actions">
+          <input type="number" inputmode="numeric" placeholder="Round pts" min="0" data-id="${p.id}" class="round-pts" />
+          <button class="advance" data-id="${p.id}" ${finished ? 'disabled style="opacity:0.5"' : ''}>+ Points &amp; Advance</button>
+          <button class="add-only" data-id="${p.id}">+ Points</button>
+          <button class="remove ghost" data-id="${p.id}" title="Remove player">&times;</button>
+        </div>
+        ${p.history.length ? `
+          <div class="history">
+            Rounds:
+            <div class="history-rounds">
+              ${p.history.map(h => `<span class="${h.advanced ? 'advanced' : ''}" title="${h.advanced ? 'Phase completed' : 'Phase not completed'}">${h.pts}</span>`).join("")}
+            </div>
+          </div>
+        ` : ''}
+      `;
+      playersEl.appendChild(card);
+    }
+
+    bindCardEvents();
+  }
+
+  function bindCardEvents() {
+    document.querySelectorAll(".player-name").forEach(input => {
+      input.addEventListener("change", e => {
+        updatePlayerName(e.target.dataset.id, e.target.value);
+      });
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") e.target.blur();
+      });
+    });
+
+    document.querySelectorAll(".phases").forEach(grid => {
+      grid.addEventListener("click", e => {
+        const pill = e.target.closest(".phase-pill");
+        if (!pill) return;
+        togglePhase(grid.dataset.id, parseInt(pill.dataset.phase, 10));
+      });
+    });
+
+    document.querySelectorAll(".advance").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const id = e.target.dataset.id;
+        addRoundPoints(id, true);
+      });
+    });
+
+    document.querySelectorAll(".add-only").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const id = e.target.dataset.id;
+        addRoundPoints(id, false);
+      });
+    });
+
+    document.querySelectorAll(".remove").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const id = e.target.dataset.id;
+        showConfirm("Remove player?", "Their score and progress will be lost.", () => removePlayer(id));
+      });
+    });
+
+    document.querySelectorAll(".round-pts").forEach(input => {
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          addRoundPoints(e.target.dataset.id, true);
+        }
+      });
+    });
+  }
+
+  function addRoundPoints(playerId, advancePhase) {
+    const p = state.players.find(p => p.id === playerId);
+    if (!p) return;
+    const input = document.querySelector(`.round-pts[data-id="${playerId}"]`);
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) {
+      toast("Enter a valid number of points");
+      input.focus();
+      return;
+    }
+    p.score += val;
+    p.history.push({ round: state.round, pts: val, advanced: advancePhase && p.phase <= 10 });
+    if (advancePhase && p.phase <= 10) {
+      p.phase += 1;
+    }
+    input.value = "";
+    saveState();
+    render();
+
+    const winner = getWinner();
+    if (winner) {
+      toast(`${winner.name} wins!`);
+    }
+  }
+
+  function nextRound() {
+    const incomplete = state.players.filter(p => p.history.length < state.round);
+    if (incomplete.length > 0) {
+      const names = incomplete.map(p => p.name).join(", ");
+      showConfirm(
+        "Start next round?",
+        `${names} hasn't entered points for round ${state.round}. Continue anyway?`,
+        () => {
+          state.round += 1;
+          saveState();
+          render();
+        }
+      );
+      return;
+    }
+    state.round += 1;
+    saveState();
+    render();
+  }
+
+  function resetGame() {
+    state = { players: [], round: 1 };
+    saveState();
+    render();
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+  }
+
+  let confirmCallback = null;
+  function showConfirm(title, message, onConfirm) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalMessage").textContent = message;
+    confirmCallback = onConfirm;
+    document.getElementById("modalBackdrop").classList.add("show");
+  }
+
+  document.getElementById("modalCancel").addEventListener("click", () => {
+    document.getElementById("modalBackdrop").classList.remove("show");
+    confirmCallback = null;
+  });
+  document.getElementById("modalConfirm").addEventListener("click", () => {
+    document.getElementById("modalBackdrop").classList.remove("show");
+    if (confirmCallback) confirmCallback();
+    confirmCallback = null;
+  });
+  document.getElementById("modalBackdrop").addEventListener("click", e => {
+    if (e.target.id === "modalBackdrop") {
+      document.getElementById("modalBackdrop").classList.remove("show");
+      confirmCallback = null;
+    }
+  });
+
+  document.getElementById("addPlayerBtn").addEventListener("click", () => {
+    const input = document.getElementById("newPlayerName");
+    addPlayer(input.value);
+    input.value = "";
+    input.focus();
+  });
+  document.getElementById("newPlayerName").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      addPlayer(e.target.value);
+      e.target.value = "";
+    }
+  });
+  document.getElementById("nextRoundBtn").addEventListener("click", nextRound);
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    showConfirm("Reset game?", "This will clear all players and scores.", resetGame);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
