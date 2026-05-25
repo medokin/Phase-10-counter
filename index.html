@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <meta name="theme-color" content="#1f2937" />
-<title>Phase 10 Tracker</title>
+<title>Phase 10 Zähler</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -354,41 +354,41 @@
 </head>
 <body>
   <header>
-    <h1>Phase 10 Tracker</h1>
-    <div class="round-info" id="roundInfo">Round 1</div>
+    <h1>Phase 10 Zähler</h1>
+    <div class="round-info" id="roundInfo">Runde 1</div>
   </header>
 
   <main>
     <div class="setup">
-      <input id="newPlayerName" type="text" placeholder="Add player name..." maxlength="20" />
-      <button class="primary" id="addPlayerBtn">Add Player</button>
+      <input id="newPlayerName" type="text" placeholder="Spielername eingeben..." maxlength="20" />
+      <button class="primary" id="addPlayerBtn">Spieler hinzufügen</button>
     </div>
 
     <div class="players" id="players"></div>
 
     <div class="controls" id="controls" style="display:none">
-      <button id="nextRoundBtn" class="primary">Next Round</button>
-      <button id="resetBtn" class="danger">Reset Game</button>
+      <button id="nextRoundBtn" class="primary">Nächste Runde</button>
+      <button id="resetBtn" class="danger">Spiel zurücksetzen</button>
     </div>
 
     <details class="phase-reference">
-      <summary>Phases &amp; Scoring</summary>
+      <summary>Phasen &amp; Punktewertung</summary>
       <ol>
-        <li>2 sets of 3</li>
-        <li>1 set of 3 + 1 run of 4</li>
-        <li>1 set of 4 + 1 run of 4</li>
-        <li>1 run of 7</li>
-        <li>1 run of 8</li>
-        <li>1 run of 9</li>
-        <li>2 sets of 4</li>
-        <li>7 cards of one color</li>
-        <li>1 set of 5 + 1 set of 2</li>
-        <li>1 set of 5 + 1 set of 3</li>
+        <li>2 x 3 Gleiche</li>
+        <li>1 x 3 Gleiche + 1 x 4er Reihe</li>
+        <li>1 x 4 Gleiche + 1 x 4er Reihe</li>
+        <li>1 x 7er Reihe</li>
+        <li>1 x 8er Reihe</li>
+        <li>1 x 9er Reihe</li>
+        <li>2 x 4 Gleiche</li>
+        <li>7 Karten einer Farbe</li>
+        <li>1 x 5 Gleiche + 1 x 2 Gleiche</li>
+        <li>1 x 5 Gleiche + 1 x 3 Gleiche</li>
       </ol>
       <div class="scoring">
-        <strong>Scoring (cards left in hand):</strong><br />
-        1–9: 5 pts &middot; 10–12: 10 pts &middot; Skip: 15 pts &middot; Wild: 25 pts<br />
-        <em style="color: var(--muted)">Lowest score wins. First to complete Phase 10 ends the game.</em>
+        <strong>Punktewertung (Karten in der Hand):</strong><br />
+        1–9: 5 Punkte &middot; 10–12: 10 Punkte &middot; Stopp-Karte: 15 Punkte &middot; Joker: 25 Punkte<br />
+        <em style="color: var(--muted)">Die niedrigste Punktzahl gewinnt. Wer zuerst Phase 10 abschließt, beendet das Spiel.</em>
       </div>
     </details>
   </main>
@@ -397,11 +397,11 @@
 
   <div class="modal-backdrop" id="modalBackdrop">
     <div class="modal">
-      <h2 id="modalTitle">Reset game?</h2>
-      <p id="modalMessage">This will clear all players and scores.</p>
+      <h2 id="modalTitle">Spiel zurücksetzen?</h2>
+      <p id="modalMessage">Alle Spieler und Punkte werden gelöscht.</p>
       <div class="modal-actions">
-        <button id="modalCancel" class="ghost">Cancel</button>
-        <button id="modalConfirm" class="danger">Reset</button>
+        <button id="modalCancel" class="ghost">Abbrechen</button>
+        <button id="modalConfirm" class="danger">Zurücksetzen</button>
       </div>
     </div>
   </div>
@@ -410,16 +410,16 @@
 (() => {
   const STORAGE_KEY = "phase10-tracker-v1";
   const PHASE_DESCRIPTIONS = [
-    "2 sets of 3",
-    "1 set of 3 + 1 run of 4",
-    "1 set of 4 + 1 run of 4",
-    "1 run of 7",
-    "1 run of 8",
-    "1 run of 9",
-    "2 sets of 4",
-    "7 cards of one color",
-    "1 set of 5 + 1 set of 2",
-    "1 set of 5 + 1 set of 3",
+    "2 x 3 Gleiche",
+    "1 x 3 Gleiche + 1 x 4er Reihe",
+    "1 x 4 Gleiche + 1 x 4er Reihe",
+    "1 x 7er Reihe",
+    "1 x 8er Reihe",
+    "1 x 9er Reihe",
+    "2 x 4 Gleiche",
+    "7 Karten einer Farbe",
+    "1 x 5 Gleiche + 1 x 2 Gleiche",
+    "1 x 5 Gleiche + 1 x 3 Gleiche",
   ];
 
   let state = loadState();
@@ -506,10 +506,10 @@
     const controlsEl = document.getElementById("controls");
     const roundInfoEl = document.getElementById("roundInfo");
 
-    roundInfoEl.textContent = `Round ${state.round}`;
+    roundInfoEl.textContent = `Runde ${state.round}`;
 
     if (state.players.length === 0) {
-      playersEl.innerHTML = `<div class="empty">Add players above to start tracking your game.</div>`;
+      playersEl.innerHTML = `<div class="empty">Füge oben Spieler hinzu, um das Spiel zu verfolgen.</div>`;
       controlsEl.style.display = "none";
       return;
     }
@@ -529,7 +529,7 @@
       const finished = p.phase > 10;
       const currentPhaseIdx = finished ? -1 : p.phase - 1;
       const phaseDesc = finished
-        ? "All 10 phases complete!"
+        ? "Alle 10 Phasen abgeschlossen!"
         : `Phase ${p.phase}: <strong>${PHASE_DESCRIPTIONS[currentPhaseIdx]}</strong>`;
 
       const scoreClass = p.score < 50 ? "low" : p.score > 150 ? "high" : "";
@@ -539,7 +539,7 @@
           <input class="player-name" value="${escapeHtml(p.name)}" data-id="${p.id}" maxlength="20" />
           <div class="player-score ${scoreClass}">
             ${p.score}
-            ${winner && winner.id === p.id ? '<span class="badge gold">WINNER</span>' : ''}
+            ${winner && winner.id === p.id ? '<span class="badge gold">SIEGER</span>' : ''}
           </div>
         </div>
         <div class="phase-info">${phaseDesc}</div>
@@ -553,16 +553,16 @@
           }).join("")}
         </div>
         <div class="player-actions">
-          <input type="number" inputmode="numeric" placeholder="Round pts" min="0" data-id="${p.id}" class="round-pts" />
-          <button class="advance" data-id="${p.id}" ${finished ? 'disabled style="opacity:0.5"' : ''}>+ Points &amp; Advance</button>
-          <button class="add-only" data-id="${p.id}">+ Points</button>
-          <button class="remove ghost" data-id="${p.id}" title="Remove player">&times;</button>
+          <input type="number" inputmode="numeric" placeholder="Rundenpunkte" min="0" data-id="${p.id}" class="round-pts" />
+          <button class="advance" data-id="${p.id}" ${finished ? 'disabled style="opacity:0.5"' : ''}>+ Punkte &amp; Aufstieg</button>
+          <button class="add-only" data-id="${p.id}">+ Punkte</button>
+          <button class="remove ghost" data-id="${p.id}" title="Spieler entfernen">&times;</button>
         </div>
         ${p.history.length ? `
           <div class="history">
-            Rounds:
+            Runden:
             <div class="history-rounds">
-              ${p.history.map(h => `<span class="${h.advanced ? 'advanced' : ''}" title="${h.advanced ? 'Phase completed' : 'Phase not completed'}">${h.pts}</span>`).join("")}
+              ${p.history.map(h => `<span class="${h.advanced ? 'advanced' : ''}" title="${h.advanced ? 'Phase abgeschlossen' : 'Phase nicht abgeschlossen'}">${h.pts}</span>`).join("")}
             </div>
           </div>
         ` : ''}
@@ -608,7 +608,7 @@
     document.querySelectorAll(".remove").forEach(btn => {
       btn.addEventListener("click", e => {
         const id = e.target.dataset.id;
-        showConfirm("Remove player?", "Their score and progress will be lost.", () => removePlayer(id));
+        showConfirm("Spieler entfernen?", "Punkte und Fortschritt gehen verloren.", () => removePlayer(id));
       });
     });
 
@@ -627,7 +627,7 @@
     const input = document.querySelector(`.round-pts[data-id="${playerId}"]`);
     const val = parseInt(input.value, 10);
     if (isNaN(val) || val < 0) {
-      toast("Enter a valid number of points");
+      toast("Bitte eine gültige Punktzahl eingeben");
       input.focus();
       return;
     }
@@ -642,7 +642,7 @@
 
     const winner = getWinner();
     if (winner) {
-      toast(`${winner.name} wins!`);
+      toast(`${winner.name} gewinnt!`);
     }
   }
 
@@ -651,8 +651,8 @@
     if (incomplete.length > 0) {
       const names = incomplete.map(p => p.name).join(", ");
       showConfirm(
-        "Start next round?",
-        `${names} hasn't entered points for round ${state.round}. Continue anyway?`,
+        "Nächste Runde starten?",
+        `${names} hat noch keine Punkte für Runde ${state.round} eingegeben. Trotzdem fortfahren?`,
         () => {
           state.round += 1;
           saveState();
@@ -728,7 +728,7 @@
   });
   document.getElementById("nextRoundBtn").addEventListener("click", nextRound);
   document.getElementById("resetBtn").addEventListener("click", () => {
-    showConfirm("Reset game?", "This will clear all players and scores.", resetGame);
+    showConfirm("Spiel zurücksetzen?", "Alle Spieler und Punkte werden gelöscht.", resetGame);
   });
 
   render();
